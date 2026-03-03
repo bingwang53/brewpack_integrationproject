@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  RAW DRAFT ONLY (not guaranteed executable as-is by IS parser).
+  Service:
+  project.brewpack_integration.integrations:processEdi214FromSftp
+-->
+<FLOW VERSION="3.0" CLEANUP="true">
+  <TRY-CATCH/>
+
+  <SEQUENCE>
+    <!-- 1) Receive EDI 214 from SFTP -->
+    <INVOKE SERVICE="project.brewpack_integration.integrations:fetchEdi214FromSftp"/>
+
+    <!-- 2) Parse PO + status -->
+    <INVOKE SERVICE="project.brewpack_integration.integrations:parseEdi214"/>
+
+    <!-- 3) Send 997 ACK -->
+    <INVOKE SERVICE="project.brewpack_integration.integrations:generateAndSend997"/>
+
+    <!-- 4) Lookup UUID by PO -->
+    <INVOKE SERVICE="project.brewpack_integration.integrations:lookupShipperUuidByPo"/>
+
+    <!-- 5) Branch by EDI 214 status -->
+    <BRANCH SWITCH="/statusCode214">
+      <SEQUENCE CASE="X6">
+        <INVOKE SERVICE="project.brewpack_integration.integrations:callApiA"/>
+        <MAP><SET NAME="apiRoute" VALUE="A"/></MAP>
+      </SEQUENCE>
+      <SEQUENCE CASE="$default">
+        <INVOKE SERVICE="project.brewpack_integration.integrations:callApiB"/>
+        <MAP><SET NAME="apiRoute" VALUE="B"/></MAP>
+      </SEQUENCE>
+    </BRANCH>
+
+    <MAP>
+      <SET NAME="success" VALUE="true"/>
+    </MAP>
+  </SEQUENCE>
+
+  <CATCH>
+    <MAP>
+      <SET NAME="success" VALUE="false"/>
+      <COPY FROM="$error/errorDump" TO="errorMessage"/>
+    </MAP>
+  </CATCH>
+</FLOW>
+

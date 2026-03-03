@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  RAW DRAFT ONLY (not guaranteed executable as-is by IS parser).
+  Service:
+  project.brewpack_integration.integrations:lookupShipperUuidByPo
+-->
+<FLOW VERSION="3.0" CLEANUP="true">
+  <SEQUENCE EXIT-ON="FAILURE"/>
+
+  <!-- Build URL: <apiBaseUrl>/shippers/by-po/{poNumber} -->
+  <INVOKE SERVICE="pub.string:concat">
+    <MAP>
+      <COPY FROM="apiBaseUrl" TO="inString1"/>
+      <SET NAME="inString2" VALUE="/shippers/by-po/"/>
+      <COPY FROM="inString3" TO="poNumber"/>
+      <COPY FROM="value" TO="url"/>
+    </MAP>
+  </INVOKE>
+
+  <MAP>
+    <SET NAME="method" VALUE="get"/>
+    <SET NAME="headers/Accept" VALUE="application/json"/>
+    <COPY FROM="apiAuthToken" TO="headers/Authorization"/>
+  </MAP>
+
+  <INVOKE SERVICE="pub.client:http"/>
+
+  <!-- Extract shipperUuid from response JSON -->
+  <INVOKE SERVICE="pub.json:jsonStringToDocument">
+    <MAP>
+      <COPY FROM="body/string" TO="jsonString"/>
+      <COPY FROM="document" TO="responseDoc"/>
+    </MAP>
+  </INVOKE>
+
+  <MAP>
+    <COPY FROM="responseDoc/shipperUuid" TO="shipperUuid"/>
+  </MAP>
+</FLOW>
+

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  RAW DRAFT ONLY (not guaranteed executable as-is by IS parser).
+  Service:
+  project.brewpack_integration.integrations:parseEdi214
+
+  Input:
+  - edi214Content (string)
+
+  Output:
+  - poNumber (string)
+  - statusCode214 (string)
+-->
+<FLOW VERSION="3.0" CLEANUP="true">
+  <SEQUENCE EXIT-ON="FAILURE"/>
+
+  <!-- Split by segment delimiter '~' (adjust if partner uses different delimiter) -->
+  <INVOKE SERVICE="pub.string:tokenize">
+    <MAP>
+      <COPY FROM="edi214Content" TO="inString"/>
+      <SET NAME="delim" VALUE="~"/>
+    </MAP>
+  </INVOKE>
+
+  <LOOP IN="/tokens" OUT="/segment">
+    <!-- Extract status from AT7 -->
+    <BRANCH SWITCH="/segment">
+      <SEQUENCE CASE="AT7*">
+        <INVOKE SERVICE="pub.string:tokenize">
+          <MAP>
+            <COPY FROM="segment" TO="inString"/>
+            <SET NAME="delim" VALUE="*"/>
+          </MAP>
+        </INVOKE>
+        <!-- AT7*X6*... -->
+        <MAP>
+          <COPY FROM="tokens[1]" TO="statusCode214"/>
+        </MAP>
+      </SEQUENCE>
+    </BRANCH>
+
+    <!-- Extract PO from L11 (example qualifier mapping, adjust for your partner) -->
+    <BRANCH SWITCH="/segment">
+      <SEQUENCE CASE="L11*">
+        <INVOKE SERVICE="pub.string:tokenize">
+          <MAP>
+            <COPY FROM="segment" TO="inString"/>
+            <SET NAME="delim" VALUE="*"/>
+          </MAP>
+        </INVOKE>
+        <MAP>
+          <COPY FROM="tokens[1]" TO="poNumber"/>
+        </MAP>
+      </SEQUENCE>
+    </BRANCH>
+  </LOOP>
+</FLOW>
+
