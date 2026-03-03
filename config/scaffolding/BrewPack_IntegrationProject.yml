@@ -1,0 +1,9 @@
+version: "1.0"
+info:
+  model: int-scaffold
+packages:
+- name: BrewPack_IntegrationProject
+  gitServerName: github_bing
+  gitUrl: https://github.com/bingwang53
+  gitUsername: bingwang53
+  gitBranch: main
